@@ -11,3 +11,4 @@ mv All_cd.txt cd_All.txt
 sort -R cd_All.txt > temp
 head -n50 temp > cd_Train.txt
 tail -n35 temp > cd_Test.txt
+
