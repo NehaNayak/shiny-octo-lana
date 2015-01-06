@@ -63,3 +63,9 @@ cat SemEvalClassInclusion/ab_Train.txt | python scripts/makePyBrainInput.py data
 cat SemEvalClassInclusion/ab_Test.txt | python scripts/makePyBrainInput.py data/SemEvalVectors_200.pickle > data/pyBrainTest_ab_200.pickle
 cat SemEvalClassInclusion/ab_Train.txt | python scripts/makePyBrainInput.py data/SemEvalVectors_800.pickle > data/pyBrainTrain_ab_800.pickle
 cat SemEvalClassInclusion/ab_Test.txt | python scripts/makePyBrainInput.py data/SemEvalVectors_800.pickle > data/pyBrainTest_ab_800.pickle
+#python wordnet/getHypernymTree.py > wordnet/organismHypernyms.txt
+#cat wordnet/organismHypernyms.txt | python wordnet/makeAncestorDict.py
+#cat wordnet/weighted_wordnet_vocabulary.txt | python wordnet/JCDistance.py wordnet/organismHypernyms_Ancestor.pickle > wordnet/organismHypernyms_JCD.txt
+
+cat wordnet/organismHypernyms.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_vocab.txt
+cat wordnet/organismHypernyms_JCD_limited.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_limited_vocab.txt
