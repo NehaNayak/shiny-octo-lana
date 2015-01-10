@@ -69,3 +69,6 @@ cat SemEvalClassInclusion/ab_Test.txt | python scripts/makePyBrainInput.py data/
 
 cat wordnet/organismHypernyms.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_vocab.txt
 cat wordnet/organismHypernyms_JCD_limited.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_limited_vocab.txt
+
+cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlab
+Input.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.matrix data/oHl_hyper.matrix
