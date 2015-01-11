@@ -1,5 +1,5 @@
 function [cost,grad] = costAndGrad(theta, visibleSize, hiddenSize, ...
-                                             lambda, sparsityParam, beta, hypoTrain, hyperTrain)
+                        lambda, sparsityParam, beta, hypoTrain, hyperTrain)
 
 W1 = reshape(theta(1:hiddenSize*visibleSize), hiddenSize, visibleSize);
 W2 = reshape(theta(hiddenSize*visibleSize+1:2*hiddenSize*visibleSize), visibleSize, hiddenSize);
@@ -16,7 +16,7 @@ b2grad = zeros(size(b2));
 
 [numFeatures, numSamples] = size(hypoTrain);
 
-[aInput, zHidden, aHidden, zOutput, aOutput] = activations(hypoTrain, W1, W2, b1, b2);
+[aInput, zHidden, aHidden, zOutput, aOutput] = computeActivations(hypoTrain, W1, W2, b1, b2);
 
 rho = sum(aHidden,2)./numSamples;
 
@@ -39,38 +39,6 @@ b1grad = sum(del_hidden,2)./numSamples;
 W2grad = (del_output*aHidden')./numSamples+lambda.*W2;
 b2grad = sum(del_output,2)./numSamples;
 
-
-%-------------------------------------------------------------------
-% After computing the cost and gradient, we will convert the gradients back
-% to a vector format (suitable for minFunc).  Specifically, we will unroll
-% your gradient matrices into a vector.
-
 grad = [W1grad(:) ; W2grad(:) ; b1grad(:) ; b2grad(:)];
 end
 
-%-------------------------------------------------------------------
-% Here's an implementation of the sigmoid function, which you may find useful
-% in your computation of the costs and the gradients.  This inputs a (row or
-% column) vector (say (z1, z2, z3)) and returns (f(z1), f(z2), f(z3)). 
-
-function sigm = sigmoid(x)
-  
-    sigm = 1 ./ (1 + exp(-x));
-end
-
-%-------------------------------------------------------------------
-% Calculate activations
-
-function [aInput, zHidden, aHidden, zOutput, aOutput] = activations(data, W1, W2, b1, b2)
-    aInput = data;
-    zHidden = bsxfun(@plus,W1*aInput,b1);
-    aHidden = sigmoid(zHidden);
-    zOutput = bsxfun(@plus,W2*aHidden,b2);
-    aOutput = sigmoid(zOutput);
-end 
-%-------------------------------------------------------------------
-% Calculate dSigmoid
-
-function dSigm = dSigmoid(x)
-    dSigm = sigmoid(x).*(1-sigmoid(x));
-end
