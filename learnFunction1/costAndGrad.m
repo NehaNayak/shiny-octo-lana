@@ -27,6 +27,7 @@ cost_sparsity = beta*sum(sparsityParam.*log(sparsityParam./rho) + (1-sparsityPar
 
 cost = cost_squaredError + cost_weightDecay + cost_sparsity;
 %cost = cost_squaredError + cost_weightDecay;
+disp(cost)
 
 %del_output = -(aInput-aOutput).*dSigmoid(zOutput);
 del_output = -(hyperTrain-aOutput).*dSigmoid(zOutput);

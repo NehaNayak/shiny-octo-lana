@@ -6,8 +6,8 @@ sparsityParam = 0.01;   % desired average activation of the hidden units.
 lambda = 0.0001;     % weight decay parameter       
 beta = 3;            % weight of sparsity penalty term       
 
-hypoTrain = dlmread('oHl_hypo_Train.matrix')';
-hyperTrain = dlmread('oHl_hyper_Train.matrix')';
+hypoTrain = dlmread('data/oHl_hypo_Train.matrix')';
+hyperTrain = dlmread('data/oHl_hyper_Train.matrix')';
 
 disp(size(hypoTrain))
 disp(size(hyperTrain))
@@ -56,6 +56,4 @@ options.display = 'on';
                                    lambda, sparsityParam, ...
                                    beta, hypoTrain, hyperTrain), ...
                               theta, options);
-
-
 
