@@ -35,21 +35,21 @@ hyperTrain = [hyper[i] for i in indices[int(0.5*listLen):]]
 print len(hypoTest),len(hypoDev), len(hypoTrain)
 print len(hyperTest),len(hyperDev), len(hyperTrain)
 
-with open(prefix+"_hypo_Test.matrix",'w') as f:
+with open(prefix+"_hypo_Test.txt",'w') as f:
     for line in hypoTest:
         f.write(line)
-with open(prefix+"_hypo_Dev.matrix",'w') as f:
+with open(prefix+"_hypo_Dev.txt",'w') as f:
     for line in hypoDev:
         f.write(line)
-with open(prefix+"_hypo_Train.matrix",'w') as f:
+with open(prefix+"_hypo_Train.txt",'w') as f:
     for line in hypoTrain:
         f.write(line)
-with open(prefix+"_hyper_Test.matrix",'w') as f:
+with open(prefix+"_hyper_Test.txt",'w') as f:
     for line in hyperTest:
         f.write(line)
-with open(prefix+"_hyper_Dev.matrix",'w') as f:
+with open(prefix+"_hyper_Dev.txt",'w') as f:
     for line in hyperDev:
         f.write(line)
-with open(prefix+"_hyper_Train.matrix",'w') as f:
+with open(prefix+"_hyper_Train.txt",'w') as f:
     for line in hyperTrain:
         f.write(line)
