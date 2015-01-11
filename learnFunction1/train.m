@@ -9,12 +9,10 @@ beta = 3;            % weight of sparsity penalty term
 hypoTrain = dlmread('data/oHl_hypo_Train.matrix')';
 hyperTrain = dlmread('data/oHl_hyper_Train.matrix')';
 
-disp(size(hypoTrain))
-disp(size(hyperTrain))
-
 theta = initializeParameters(hiddenSize, visibleSize);
-[cost, grad] = costAndGrad(theta, visibleSize, hiddenSize, lambda, ...
-                                     sparsityParam, beta, hypoTrain, hyperTrain);
+
+%[cost, grad] = costAndGrad(theta, visibleSize, hiddenSize, lambda, ...
+%                                    sparsityParam, beta, hypoTrain, hyperTrain);
 
 %checkNumericalGradient();
 

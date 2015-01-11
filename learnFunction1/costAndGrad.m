@@ -16,7 +16,8 @@ b2grad = zeros(size(b2));
 
 [numFeatures, numSamples] = size(hypoTrain);
 
-[aInput, zHidden, aHidden, zOutput, aOutput] = computeActivations(hypoTrain, W1, W2, b1, b2);
+%[aInput, zHidden, aHidden, zOutput, aOutput] = computeActivations(hypoTrain, W1, W2, b1, b2);
+[aInput, aHidden, aOutput] = computeActivations(hypoTrain, W1, W2, b1, b2);
 
 rho = sum(aHidden,2)./numSamples;
 
@@ -27,11 +28,14 @@ cost_sparsity = beta*sum(sparsityParam.*log(sparsityParam./rho) + (1-sparsityPar
 
 cost = cost_squaredError + cost_weightDecay + cost_sparsity;
 %cost = cost_squaredError + cost_weightDecay;
-disp(cost)
 
 %del_output = -(aInput-aOutput).*dSigmoid(zOutput);
-del_output = -(hyperTrain-aOutput).*dSigmoid(zOutput);
-del_hidden = bsxfun(@plus, (W2' * del_output), beta .* (-sparsityParam ./ rho + (1 - sparsityParam) ./ (1 - rho))).*dSigmoid(zHidden); 
+
+%del_output = -(hyperTrain-aOutput).*dSigmoid(zOutput);
+%del_hidden = bsxfun(@plus, (W2' * del_output), beta .* (-sparsityParam ./ rho + (1 - sparsityParam) ./ (1 - rho))).*dSigmoid(zHidden); 
+
+del_output = -(hyperTrain-aOutput).*dSigmoid(aOutput);
+del_hidden = bsxfun(@plus, (W2' * del_output), beta .* (-sparsityParam ./ rho + (1 - sparsityParam) ./ (1 - rho))).*dSigmoid(aHidden); 
 %del_hidden = (W2' * del_output).*dSigmoid(zHidden); 
     
 W1grad = (del_hidden*aInput')./numSamples + lambda.*W1;
