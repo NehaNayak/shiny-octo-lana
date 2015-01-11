@@ -10,6 +10,6 @@ pairs = []
 for line in sys.stdin:
     (hypo, hyper) = line.split()
     if hypo in Vectors.keys() and hyper in Vectors.keys():
-        hypoFile.write("\t".join(Vectors[hypo])+"\n")
-        hyperFile.write("\t".join(Vectors[hyper])+"\n")
+        hypoFile.write(hypo+"\t"+"\t".join(Vectors[hypo])+"\n")
+        hyperFile.write(hyper+"\t"+"\t".join(Vectors[hyper])+"\n")
 

@@ -70,6 +70,5 @@
 #cat wordnet/organismHypernyms.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_vocab.txt
 #cat wordnet/organismHypernyms_JCD_limited.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_limited_vocab.txt
 
-#cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.matrix data/oHl_hyper.matrix
-
-#python scripts/makeTrainTestDev.py data/oHl_hypo.matrix data/oHl_hyper.matrix learnFunction1/oHl
+#cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.txt data/oHl_hyper.txt
+python scripts/makeTrainTestDev.py data/oHl_hypo.txt data/oHl_hyper.txt learnFunction1/oHl
