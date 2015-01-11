@@ -73,3 +73,11 @@
 #cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.matrix data/oHl_hyper.matrix
 
 #python scripts/makeTrainTestDev.py data/oHl_hypo.matrix data/oHl_hyper.matrix learnFunction1/oHl
+
+for type in 'hypo' 'hyper'
+do
+    for tset in 'Train' 'Test' 'Dev'
+    do
+    echo 'learnFunction1/oHl_'$type'_'$tset'.txt'
+    done
+done
