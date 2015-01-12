@@ -1,4 +1,4 @@
-function train(visibleSize, hiddenSize, sparsity, lambda, beta, thetaOutFileName, hypoTrainFileName, hyperTrainFileName)
+function train(visibleSize, hiddenSize, sparsityParam, lambda, beta, thetaOutFileName, hypoTrainFileName, hyperTrainFileName)
 	%visibleSize = 50;
 	%hiddenSize = 1000;
 	%sparsityParam = 0.01;
@@ -13,7 +13,8 @@ function train(visibleSize, hiddenSize, sparsity, lambda, beta, thetaOutFileName
 	%  Use minFunc to minimize the function
 	addpath minFunc/
 	options.Method = 'lbfgs'; 
-	options.maxIter = 400;	  
+	%options.maxIter = 400;	  
+	options.maxIter = 20;	  
 	options.display = 'on';
 
 	[opttheta, cost] = minFunc( @(p) costAndGrad(p, ...

@@ -1,8 +1,12 @@
-function test(opttheta, hypoTest, hiddenSize, visibleSize)
+function test(thetaFile, hypoTestFileName, hiddenSize, visibleSize, hyperPredictFileName)
     % unpack theta
-    [W1, W2, b1, b2] = unpackTheta(opttheta, hiddenSize, visibleSize); 
+    optTheta = dlmread(thetaFile);
+    [W1, W2, b1, b2] = unpackTheta(optTheta, hiddenSize, visibleSize); 
+
+
     % compute activations
-    [aInput, aHidden, aOutput] = computeActivations(hypoTest, W1, W2, b1, b2)
+    hypoTest= dlmread(hypoTestFileName)';
+    [aInput, aHidden, aOutput] = computeActivations(hypoTest, W1, W2, b1, b2);
     % write calculated hypernym vectors to file
-    dlmwrite('derp.txt',aOutput','delimiter','\t')
+    dlmwrite(hyperPredictFileName,aOutput','delimiter','\t');
 end
