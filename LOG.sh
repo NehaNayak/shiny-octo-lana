@@ -67,20 +67,43 @@
 #cat wordnet/organismHypernyms.txt | python wordnet/makeAncestorDict.py
 #cat wordnet/weighted_wordnet_vocabulary.txt | python wordnet/JCDistance.py wordnet/organismHypernyms_Ancestor.pickle > wordnet/organismHypernyms_JCD.txt
 
+# Choose words from Wordnet
+
 #cat wordnet/organismHypernyms.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_vocab.txt
 #cat wordnet/organismHypernyms_JCD_limited.txt |cut -f1,2 | awk '{print $1"\n"$2}' | sort | uniq > wordnet/organismHypernyms_limited_vocab.txt
 
-#cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.matrix data/oHl_hyper.matrix
+# Get glove word vectors
 
-cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.txt data/oHl_hyper.txt
-python scripts/makeTrainTestDev.py data/oHl_hypo.txt data/oHl_hyper.txt learnFunction1/data/oHl
+#fgrep -w -f wordnet/organismHypernyms_limited_vocab.txt glove/glove.6B.50d.txt > data/organismHypernyms_limited_vectors.txt
+#cat data/organismHypernyms_limited_vectors.txt | python scripts/pickleifyVectors.py > data/organismHypernyms_limited_vectors.pickle
 
-for type in 'hypo' 'hyper'
-do
-    for tset in 'Train' 'Test' 'Dev'
-    do
-    fileIn='learnFunction1/data/oHl_'$type'_'$tset'.txt'
-    fileOut='learnFunction1/data/oHl_'$type'_'$tset'.matrix'
-    cat $fileIn | cut -f2-51 > $fileOut
-    done
-done
+#gunzip -c glove/glove.6B.100d.txt.gz | python scripts/noFgrep.py wordnet/organismHypernyms_limited_vocab.txt > data/organismHypernyms_limited_vectors_glove100.txt
+#gunzip -c glove/glove.6B.200d.txt.gz | python scripts/noFgrep.py wordnet/organismHypernyms_limited_vocab.txt > data/organismHypernyms_limited_vectors_glove200.txt
+#HGGgunzip -c glove/glove.6B.300d.txt.gz | python scripts/noFgrep.py wordnet/organismHypernyms_limited_vocab.txt > data/organismHypernyms_limited_vectors_glove300.txt
+cat data/organismHypernyms_limited_vectors_glove100.txt | python scripts/pickleifyVectors.py > data/organismHypernyms_limited_vectors_glove100.pickle
+cat data/organismHypernyms_limited_vectors_glove200.txt | python scripts/pickleifyVectors.py > data/organismHypernyms_limited_vectors_glove200.pickle
+cat data/organismHypernyms_limited_vectors_glove300.txt | python scripts/pickleifyVectors.py > data/organismHypernyms_limited_vectors_glove300.pickle
+
+# Make things Matlab-ready
+
+#cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors.pickle data/oHl_hypo.txt data/oHl_hyper.txt
+#python scripts/makeTrainTestDev.py data/oHl_hypo.txt data/oHl_hyper.txt learnFunction1/data/oHl
+
+#for type in 'hypo' 'hyper'
+#do
+#    for tset in 'Train' 'Test' 'Dev'
+#    do
+#       fileIn='learnFunction1/data/oHl_'$type'_'$tset'.txt'
+#       fileOut='learnFunction1/data/oHl_'$type'_'$tset'.matrix'
+#       cat $fileIn | cut -f2-51 > $fileOut
+#    done
+#done
+
+#cut -f1 learnFunction1/data/oHl_hyper_Dev.txt > temp
+#for hiddenSize in 50 100 500 1000 5000
+#do
+#    inFileName='learnFunction1/data/hypers/hyper_v50_h'$hiddenSize'_r0.01_l0.0001_b3.matrix' 
+#    outFileName='learnFunction1/data/hypers/hyper_v50_h'$hiddenSize'_r0.01_l0.0001_b3.txt' 
+#    paste temp $inFileName > $outFileName 
+#done
+#rm temp
