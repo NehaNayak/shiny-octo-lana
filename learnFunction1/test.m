@@ -1,6 +1,6 @@
-function test(thetaFile, hypoTestFileName, hiddenSize, visibleSize, hyperPredictFileName)
+function test(thetaFileName, hypoTestFileName, hiddenSize, visibleSize, hyperPredictFileName)
     % unpack theta
-    optTheta = dlmread(thetaFile);
+    optTheta = dlmread(thetaFileName);
     [W1, W2, b1, b2] = unpackTheta(optTheta, hiddenSize, visibleSize); 
 
 
