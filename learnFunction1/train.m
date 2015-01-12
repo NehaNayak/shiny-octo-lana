@@ -1,26 +1,26 @@
-function train(visibleSize, hiddenSize, sparsity, lambda, beta)
-visibleSize = 50; 
-hiddenSize = 1000;     
-sparsityParam = 0.01;   
-lambda = 0.0001;     
-beta = 3;            
+function train(visibleSize, hiddenSize, sparsity, lambda, beta, thetaOutFileName, hypoTrainFileName, hyperTrainFileName)
+	%visibleSize = 50;
+	%hiddenSize = 1000;
+	%sparsityParam = 0.01;
+	%lambda = 0.0001;
+	%beta = 3;
 
-hypoTrain = dlmread('data/oHl_hypo_Train.matrix')';
-hyperTrain = dlmread('data/oHl_hyper_Train.matrix')';
+	hypoTrain = dlmread(hypoTrainFileName)';
+	hyperTrain = dlmread(hyperTrainFileName)';
 
-theta = initializeParameters(hiddenSize, visibleSize);
+	theta = initializeParameters(hiddenSize, visibleSize);
 
-%  Use minFunc to minimize the function
-addpath minFunc/
-options.Method = 'lbfgs'; 
-options.maxIter = 400;	  
-options.display = 'on';
+	%  Use minFunc to minimize the function
+	addpath minFunc/
+	options.Method = 'lbfgs'; 
+	options.maxIter = 400;	  
+	options.display = 'on';
 
-[opttheta, cost] = minFunc( @(p) costAndGrad(p, ...
-                                   visibleSize, hiddenSize, ...
-                                   lambda, sparsityParam, ...
-                                   beta, hypoTrain, hyperTrain), ...
-                              theta, options);
+	[opttheta, cost] = minFunc( @(p) costAndGrad(p, ...
+		visibleSize, hiddenSize, ...
+		lambda, sparsityParam, ...
+		beta, hypoTrain, hyperTrain), ...
+		theta, options);
 
-dlmwrite('derp.txt',opttheta,'delimiter','\t')
+	dlmwrite(thetaOutFileName,opttheta,'delimiter','\t')
 end
