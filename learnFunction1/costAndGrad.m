@@ -1,7 +1,7 @@
 function [cost,grad] = costAndGrad(theta, visibleSize, hiddenSize, ...
                         lambda, sparsityParam, beta, hypoTrain, hyperTrain)
 
-[W1, W2, b1, b2] = unpackTheta(theta)
+[W1, W2, b1, b2] = unpackTheta(theta, hiddenSize, visibleSize);
 
 % Cost and gradient variables (your code needs to compute these values). 
 % Here, we initialize them to zeros. 
@@ -25,7 +25,7 @@ cost_sparsity = beta*sum(sparsityParam.*log(sparsityParam./rho) + (1-sparsityPar
 
 cost = cost_squaredError + cost_weightDecay + cost_sparsity;
 %cost = cost_squaredError + cost_weightDecay;
-
+disp(cost)
 %del_output = -(aInput-aOutput).*dSigmoid(zOutput);
 
 %del_output = -(hyperTrain-aOutput).*dSigmoid(zOutput);
