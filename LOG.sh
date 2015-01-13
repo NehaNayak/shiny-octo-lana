@@ -96,18 +96,18 @@
 #python scripts/makeTrainTestDev.py data/oHl_hypo_glove200.txt data/oHl_hyper_glove200.txt learnFunction1/data/oHl_200
 
 #cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors_glove300.pickle data/oHl_hypo_glove300.txt data/oHl_hyper_glove300.txt
-#python scripts/makeTrainTestDev.py data/oHl_hypo_glove300.txt data/oHl_hyper_glove200.txt learnFunction1/data/oHl_300
+python scripts/makeTrainTestDev.py data/oHl_hypo_glove300.txt data/oHl_hyper_glove300.txt learnFunction1/data/oHl_300
 
 for type in 'hypo' 'hyper'
 do
     for tset in 'Train' 'Test' 'Dev'
     do
-        fileIn='learnFunction1/data/oHl_100_'$type'_'$tset'.txt'
-        fileOut='learnFunction1/data/oHl_100_'$type'_'$tset'.matrix'
-        cat $fileIn | cut -f2-101 > $fileOut
-        fileIn='learnFunction1/data/oHl_200_'$type'_'$tset'.txt'
-        fileOut='learnFunction1/data/oHl_200_'$type'_'$tset'.matrix'
-        cat $fileIn | cut -f2-201 > $fileOut
+#        fileIn='learnFunction1/data/oHl_100_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_100_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-101 > $fileOut
+#        fileIn='learnFunction1/data/oHl_200_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_200_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-201 > $fileOut
         fileIn='learnFunction1/data/oHl_300_'$type'_'$tset'.txt'
         fileOut='learnFunction1/data/oHl_300_'$type'_'$tset'.matrix'
         cat $fileIn | cut -f2-301 > $fileOut
@@ -132,3 +132,26 @@ done
 #    paste temp $inFileName > $outFileName 
 #done
 #rm temp
+
+# Baseline - plurals
+#gunzip -c glove/glove.6B.50d.txt.gz | awk '{print $1}' |python scripts/getPluralPairs.py wordnet/organismHypernyms_vocab.txt > wordnet/organismPlurals.txt
+#awk '{print $1"\n"$2}' wordnet/organismPlurals.txt > wordnet/organismPlurals_vocab.txt
+#gunzip -c glove/glove.6B.100d.txt.gz | python scripts/noFgrep.py wordnet/organismPlurals_vocab.txt > data/organismPlurals_vectors_glove100.txt
+#cat data/organismPlurals_vectors_glove100.txt | python scripts/pickleifyVectors.py > data/organismPlurals_vectors_glove100.pickle
+#cat wordnet/organismPlurals.txt | python scripts/makeMatlabInput.py data/organismPlurals_vectors_glove100.pickle data/oPl_hypo_glove100.txt data/oPl_hyper_glove100.txt
+#python scripts/makeTrainTestDev.py data/oPl_hypo_glove100.txt data/oPl_hyper_glove100.txt learnFunction1/data/oPl_100
+#for type in 'hypo' 'hyper'
+#do
+#    for tset in 'Train' 'Test' 'Dev'
+#    do
+#        fileIn='learnFunction1/data/oHl_100_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_100_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-101 > $fileOut
+#        fileIn='learnFunction1/data/oHl_200_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_200_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-201 > $fileOut
+#        fileIn='learnFunction1/data/oHl_300_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_300_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-301 > $fileOut
+#    done
+#done
