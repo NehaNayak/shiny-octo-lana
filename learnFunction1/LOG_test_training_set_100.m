@@ -1,0 +1,22 @@
+hypoTestFileName='data/oHl_100_hypo_Dev.matrix';
+visibleSize=100; 
+
+thetaFileName='data/thetas/theta_v100_h50_r0.01_l0.0001_b3.matrix';
+hiddenSize=50;
+test_training_set(thetaFileName, hypoTestFileName, hiddenSize, visibleSize)
+
+thetaFileName='data/thetas/theta_v100_h100_r0.01_l0.0001_b3.matrix';
+hiddenSize=100;
+test_training_set(thetaFileName, hypoTestFileName, hiddenSize, visibleSize)
+
+thetaFileName='data/thetas/theta_v100_h500_r0.01_l0.0001_b3.matrix';
+hiddenSize=500;
+test_training_set(thetaFileName, hypoTestFileName, hiddenSize, visibleSize)
+
+thetaFileName='data/thetas/theta_v100_h1000_r0.01_l0.0001_b3.matrix';
+hiddenSize=1000;
+test_training_set(thetaFileName, hypoTestFileName, hiddenSize, visibleSize)
+
+thetaFileName='data/thetas/theta_v100_h5000_r0.01_l0.0001_b3.matrix';
+hiddenSize=5000;
+test_training_set(thetaFileName, hypoTestFileName, hiddenSize, visibleSize)
