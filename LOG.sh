@@ -96,23 +96,23 @@
 #python scripts/makeTrainTestDev.py data/oHl_hypo_glove200.txt data/oHl_hyper_glove200.txt learnFunction1/data/oHl_200
 
 #cat wordnet/organismHypernyms_JCD_limited.txt | python scripts/makeMatlabInput.py data/organismHypernyms_limited_vectors_glove300.pickle data/oHl_hypo_glove300.txt data/oHl_hyper_glove300.txt
-python scripts/makeTrainTestDev.py data/oHl_hypo_glove300.txt data/oHl_hyper_glove300.txt learnFunction1/data/oHl_300
+#python scripts/makeTrainTestDev.py data/oHl_hypo_glove300.txt data/oHl_hyper_glove300.txt learnFunction1/data/oHl_300
 
-for type in 'hypo' 'hyper'
-do
-    for tset in 'Train' 'Test' 'Dev'
-    do
+#for type in 'hypo' 'hyper'
+#do
+#    for tset in 'Train' 'Test' 'Dev'
+#    do
 #        fileIn='learnFunction1/data/oHl_100_'$type'_'$tset'.txt'
 #        fileOut='learnFunction1/data/oHl_100_'$type'_'$tset'.matrix'
 #        cat $fileIn | cut -f2-101 > $fileOut
 #        fileIn='learnFunction1/data/oHl_200_'$type'_'$tset'.txt'
 #        fileOut='learnFunction1/data/oHl_200_'$type'_'$tset'.matrix'
 #        cat $fileIn | cut -f2-201 > $fileOut
-        fileIn='learnFunction1/data/oHl_300_'$type'_'$tset'.txt'
-        fileOut='learnFunction1/data/oHl_300_'$type'_'$tset'.matrix'
-        cat $fileIn | cut -f2-301 > $fileOut
-    done
-done
+#        fileIn='learnFunction1/data/oHl_300_'$type'_'$tset'.txt'
+#        fileOut='learnFunction1/data/oHl_300_'$type'_'$tset'.matrix'
+#        cat $fileIn | cut -f2-301 > $fileOut
+#    done
+#done
 
 #for type in 'hypo' 'hyper'
 #do
@@ -155,3 +155,12 @@ done
 #        cat $fileIn | cut -f2-301 > $fileOut
 #    done
 #done
+
+cut -f1 learnFunction1/data/oHl_hyper_Train.txt > temp
+for hiddenSize in 50 100 500 1000 5000
+do
+    inFileName='learnFunction1/data/hypers/hyper_train_v50_h'$hiddenSize'_r0.01_l0.0001_b3.matrix' 
+    outFileName='learnFunction1/data/hypers/hyper_train_v50_h'$hiddenSize'_r0.01_l0.0001_b3.txt' 
+    paste temp $inFileName > $outFileName 
+done
+#rm temp
