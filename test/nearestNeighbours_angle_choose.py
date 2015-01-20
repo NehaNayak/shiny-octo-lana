@@ -6,13 +6,9 @@ import numpy as np
 from numpy import linalg as LA
 import scipy.spatial.distance
 
-AllVectors = pickle.load(open(sys.argv[1])) 
+AllVectors = pickle.load(open(sys.argv[1]))
 
 PredVectors = []
-
-WordnetWords = []
-for line in open(sys.argv[2]):
-    WordnetWords.append(line[:-1])
 
 for line in sys.stdin:
     thisLine = line.split()
@@ -21,34 +17,21 @@ for line in sys.stdin:
     vec/=LA.norm(vec)
     PredVectors.append((word, vec))
     
-VectorList = []
-
 ResultsList = []
 
 for hyper, predVector in PredVectors:
-    VectorList = []
     actual = AllVectors[hyper]
     key = (math.acos(np.inner(actual, predVector)),"_PRED")
+
+    compareWord = random.choice(AllVectors.keys())
+    otherVector = AllVectors[compareWord]
+    otherKey = (math.acos(np.inner(actual,otherVector)),"_OTHER")
+
+    VectorList = [ (math.acos(np.inner(actual, vector)),word) for word, vector in AllVectors.iteritems() if not word==hyper]
+
     VectorList.append(key)
-
-    CompareWords = random.sample(WordnetWords,99)
-    #CompareWords = []
-#    while len(CompareWords)<2:
-#        word = random.choice(WordnetWords)
-#        if word in AllVectors.keys() and not word==hyper:
-#            CompareWords.append(word)
-
-    for word in CompareWords:
-        if word in AllVectors.keys() and not word==hyper:
-            Vector = AllVectors[word]
-            VectorList.append( (\
-                math.acos(np.inner(actual,Vector)),word\
-                ))
-
+    VectorList.append(otherKey)
     VectorList = sorted(VectorList)
-#    print VectorList
-#    print hyper, VectorList.index(key)
-    ResultsList.append(VectorList.index(key))
+    ResultsList.append((VectorList.index(key),VectorList.index(otherKey)))
 
-#print ResultsList
-print float(sum(ResultsList))/float(len(ResultsList))
+print ResultsList
