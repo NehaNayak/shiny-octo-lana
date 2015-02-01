@@ -6,12 +6,23 @@ function cosine(v, w)
   return v:dot(w) / v:norm() / w:norm()
 end
 
+cmd = torch.CmdLine()
+cmd:option('-inputSize',50,'size of input layer')
+cmd:option('-hiddenSize',100,'size of hidden layer')
+cmd:option('-outputDir','./','size of hidden layer')
+cmdparams = cmd:parse(arg)
+
+local decoder_output_path = outputDir .. 'decoder_' .. inputSize .. '_' .. hiddenSize .. '.th'
+local encoder_output_path = outputDir .. 'encoder_' .. inputSize .. '_' .. hiddenSize .. '.th'
+
+print(encoder_output_path)
+
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
 local emb_prefix = emb_dir .. 'glove.6B'
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
-    emb_prefix .. '.300d.th')
+    emb_prefix .. '.' .. cmdparams.inputSize .. 'd.th')
 print('vocab size = ' .. emb_vecs:size(1))
 print('dimension = ' .. emb_vecs:size(2))
 
@@ -27,18 +38,12 @@ local f =assert(io.open("temp.txt", "r"))
 while true do
   line = f:read()
   if not line then break end
-  t = {}
-  for k,v in string.gmatch(line, "(%w+)%s(%w+)") do
-    print(k)
-    print(v)
-    local vin1 = emb_vecs[emb_vocab:index(k)]:typeAs(m)
-    local vin2 = emb_vecs[emb_vocab:index(v)]:typeAs(m)
-    table.insert(dataset,{vin1,vin2})
+  for win,wout in string.gmatch(line, "(%w+)%s(%w+)") do
+    local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
+    local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
+    table.insert(dataset,{vin,vout})
   end
 end
-
-print('dataset')
-print(dataset)
 
 params = {}
 params.beta = 1
@@ -132,8 +137,6 @@ for t = 1,params.maxiter,params.batchsize do
       return f,dl_dx
    end
 
-    
-
 --------------------------------------------------------------------
    -- one SGD step
    --
@@ -156,3 +159,11 @@ for t = 1,params.maxiter,params.batchsize do
       err = 0; iter = 0
    end
 end
+
+print(encoder.weight)
+print(encoder.bias)
+print(decoder.weight)
+print(decoder.bias)
+
+torch.save(encoder_output_path, encoder)
+torch.save(decoder_output_path, decoder)
