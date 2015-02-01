@@ -72,12 +72,12 @@ local emb_vocab, emb_vecs = torchnlp.read_embedding(
 print('vocab size = ' .. emb_vecs:size(1))
 print('dimension = ' .. emb_vecs:size(2))
 
-local m = torch.randn(100)
+local m = torch.randn(cmdparams.inputSize)
 local f =assert(io.open("temp.txt", "r"))
 while true do
   line = f:read()
   if not line then break end
-  for win,wout in string.gmatch(line, "(%w+)%s(%w+)") do
+  for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     print(win)
@@ -123,8 +123,7 @@ print(dataset_out)
 -- named 'nn'.
 
 model = nn.Sequential()                 -- define the container
---ninputs = 2; noutputs = 1
-ninputs = 100; noutputs = 100
+ninputs = cmdparams.inputSize; noutputs = cmdparams.inputSize
 model:add(nn.Linear(ninputs, noutputs)) -- define the only module
 
 
@@ -173,14 +172,16 @@ feval = function(x_new)
    -- select a new training sample
    _nidx_ = (_nidx_ or 0) + 1
    -- if _nidx_ > (#data)[1] then _nidx_ = 1 end
-   if _nidx_ > (#dataset)[1] then _nidx_ = 1 end
+   if _nidx_ > (#dataset_in)[1] then _nidx_ = 1 end
 
    --local sample = data[_nidx_]
-   local sample = dataset[_nidx_]
+
+   local input_sample = dataset_in[_nidx_]
+   local target_sample = dataset_out[_nidx_]
    --local target = sample[{ {1} }]      -- this funny looking syntax allows
    --local inputs = sample[{ {2,3} }]    -- slicing of arrays.
-   local target = sample:clone()
-   local inputs = sample:clone()
+   local target = target_sample:clone()
+   local inputs = input_sample:clone()
 
    -- reset gradients (gradients are always accumulated, to accomodate 
    -- batch methods)
@@ -222,7 +223,7 @@ for i = 1,1e4 do
 
    -- an epoch is a full loop over our training data
    -- for i = 1,(#data)[1] do
-   for i = 1,(#dataset)[1] do
+   for i = 1,(#dataset_in)[1] do
 
       -- optim contains several optimization algorithms. 
       -- All of these algorithms assume the same parameters:
@@ -243,7 +244,7 @@ for i = 1,1e4 do
    end
 
    -- report average error on epoch
-   current_loss = current_loss / (#dataset)[1]
+   current_loss = current_loss / (#dataset_in)[1]
    print('current loss = ' .. current_loss)
 
 end
