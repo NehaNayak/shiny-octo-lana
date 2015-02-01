@@ -56,8 +56,9 @@ require 'torchnlp'
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
+cmd:option('-prefix','_','size of input layer')
 cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
-cmd:option('-pairDir','../pairFiles','where to find word pairs')
+cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
 local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
@@ -67,12 +68,12 @@ local emb_dir = '/scr/kst/data/wordvecs/glove/'
 local emb_prefix = emb_dir .. 'glove.6B'
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
-    emb_prefix .. '.100d.th')
+    emb_prefix .. '.' .. inputSize ..'d.th')
 print('vocab size = ' .. emb_vecs:size(1))
 print('dimension = ' .. emb_vecs:size(2))
 
 local m = torch.randn(cmdparams.inputSize)
-local f =assert(io.open("temp.txt", "r"))
+local f =assert(io.open(pairPath, "r"))
 while true do
   line = f:read()
   if not line then break end
