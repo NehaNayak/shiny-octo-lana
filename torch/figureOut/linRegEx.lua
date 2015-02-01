@@ -20,7 +20,7 @@
 require 'torch'
 require 'optim'
 require 'nn'
-
+require 'torchnlp'
 
 ----------------------------------------------------------------------
 -- 1. Create the training data
@@ -53,6 +53,35 @@ require 'nn'
 -- and corn is our target value.
 
 --  {corn, fertilizer, insecticide}
+print('loading word embeddings')
+local emb_dir = '/scr/kst/data/wordvecs/glove/'
+local emb_prefix = emb_dir .. 'glove.6B'
+local emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_prefix .. '.vocab',
+    emb_prefix .. '.100d.th')
+print('vocab size = ' .. emb_vecs:size(1))
+print('dimension = ' .. emb_vecs:size(2))
+
+local m = torch.randn(100)
+local f =assert(io.open("temp.txt", "r"))
+while true do
+  line = f:read()
+  if not line then break end
+  for win,wout in string.gmatch(line, "(%w+)%s(%w+)") do
+    local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
+    local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
+    print(win)
+    if dataset==nil then
+        dataset = vin:clone()
+    else
+        dataset = torch.cat(dataset,vin,2)
+    end
+    dataset = torch.cat(dataset,vin,2)
+  end
+end
+
+dataset = dataset:t()
+
 data = torch.Tensor{
    {40,  6,  4},
    {44, 10,  4},
@@ -66,6 +95,8 @@ data = torch.Tensor{
    {80, 32, 24}
 }
 
+print(data)
+print(dataset)
 
 ----------------------------------------------------------------------
 -- 2. Define the model (predictor)
@@ -93,7 +124,8 @@ data = torch.Tensor{
 -- named 'nn'.
 
 model = nn.Sequential()                 -- define the container
-ninputs = 2; noutputs = 1
+--ninputs = 2; noutputs = 1
+ninputs = 100; noutputs = 100
 model:add(nn.Linear(ninputs, noutputs)) -- define the only module
 
 
@@ -141,11 +173,15 @@ feval = function(x_new)
 
    -- select a new training sample
    _nidx_ = (_nidx_ or 0) + 1
-   if _nidx_ > (#data)[1] then _nidx_ = 1 end
+   -- if _nidx_ > (#data)[1] then _nidx_ = 1 end
+   if _nidx_ > (#dataset)[1] then _nidx_ = 1 end
 
-   local sample = data[_nidx_]
-   local target = sample[{ {1} }]      -- this funny looking syntax allows
-   local inputs = sample[{ {2,3} }]    -- slicing of arrays.
+   --local sample = data[_nidx_]
+   local sample = dataset[_nidx_]
+   --local target = sample[{ {1} }]      -- this funny looking syntax allows
+   --local inputs = sample[{ {2,3} }]    -- slicing of arrays.
+   local target = sample:clone()
+   local inputs = sample:clone()
 
    -- reset gradients (gradients are always accumulated, to accomodate 
    -- batch methods)
@@ -186,7 +222,8 @@ for i = 1,1e4 do
    current_loss = 0
 
    -- an epoch is a full loop over our training data
-   for i = 1,(#data)[1] do
+   -- for i = 1,(#data)[1] do
+   for i = 1,(#dataset)[1] do
 
       -- optim contains several optimization algorithms. 
       -- All of these algorithms assume the same parameters:
@@ -207,28 +244,7 @@ for i = 1,1e4 do
    end
 
    -- report average error on epoch
-   current_loss = current_loss / (#data)[1]
+   current_loss = current_loss / (#dataset)[1]
    print('current loss = ' .. current_loss)
 
-end
-
-
-----------------------------------------------------------------------
--- 5. Test the trained model.
-
--- Now that the model is trained, one can test it by evaluating it
--- on new samples.
-
--- The text solves the model exactly using matrix techniques and determines
--- that 
---   corn = 31.98 + 0.65 * fertilizer + 1.11 * insecticides
-
--- We compare our approximate results with the text's results.
-
-text = {40.32, 42.92, 45.33, 48.85, 52.37, 57, 61.82, 69.78, 72.19, 79.42}
-
-print('id  approx   text')
-for i = 1,(#data)[1] do
-   local myPrediction = model:forward(data[i][{{2,3}}])
-   print(string.format("%2d  %6.2f %6.2f", i, myPrediction[1], text[i]))
 end
