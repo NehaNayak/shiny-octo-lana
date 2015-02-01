@@ -34,4 +34,5 @@ for hyper, predVector in PredVectors:
     VectorList = sorted(VectorList)
     ResultsList.append((VectorList.index(key),VectorList.index(otherKey)))
 
-print ResultsList
+for (a,b) in ResultsList:
+    sys.stdout.write(str(a)+"\t"+str(b)+"\n")
