@@ -56,12 +56,11 @@ require 'torchnlp'
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
-cmd:option('-hiddenSize',50,'size of hidden layer')
 cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
+cmd:option('-pairDir','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
-local decoder_output_path = cmdparams.outputDir .. 'decoder_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
-local encoder_output_path = cmdparams.outputDir .. 'encoder_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
+local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
 
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
@@ -248,3 +247,5 @@ for i = 1,1e4 do
    print('current loss = ' .. current_loss)
 
 end
+
+torch.save(output_path, model)
