@@ -53,6 +53,16 @@ require 'torchnlp'
 -- and corn is our target value.
 
 --  {corn, fertilizer, insecticide}
+
+cmd = torch.CmdLine()
+cmd:option('-inputSize',100,'size of input layer')
+cmd:option('-hiddenSize',50,'size of hidden layer')
+cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
+cmdparams = cmd:parse(arg)
+
+local decoder_output_path = cmdparams.outputDir .. 'decoder_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
+local encoder_output_path = cmdparams.outputDir .. 'encoder_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
+
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
 local emb_prefix = emb_dir .. 'glove.6B'
@@ -71,32 +81,21 @@ while true do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     print(win)
-    if dataset==nil then
-        dataset = vin:clone()
+    if dataset_in==nil then
+        dataset_in = vin:clone()
+        dataset_out = vout:clone()
     else
-        dataset = torch.cat(dataset,vin,2)
+        dataset_in = torch.cat(dataset_in,vin,2)
+      dataset_out = torch.cat(dataset_out,vin,2)
     end
-    dataset = torch.cat(dataset,vin,2)
   end
 end
 
-dataset = dataset:t()
+dataset_in = dataset_in:t()
+dataset_out = dataset_out:t()
 
-data = torch.Tensor{
-   {40,  6,  4},
-   {44, 10,  4},
-   {46, 12,  5},
-   {48, 14,  7},
-   {52, 16,  9},
-   {58, 18, 12},
-   {60, 22, 14},
-   {68, 24, 20},
-   {74, 26, 21},
-   {80, 32, 24}
-}
-
-print(data)
-print(dataset)
+print(dataset_in)
+print(dataset_out)
 
 ----------------------------------------------------------------------
 -- 2. Define the model (predictor)
