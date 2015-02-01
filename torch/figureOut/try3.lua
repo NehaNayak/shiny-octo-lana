@@ -57,27 +57,22 @@ inputSize = cmdparams.inputSize -- input size
 outputSize = cmdparams.hiddenSize -- output size
 
 -- encoder
-encoder = nn.Sequential()
+model = nn.Sequential()
 encoderLinear = nn.Linear(inputSize,outputSize)
-encoder:add(encoderLinear)
-encoder:add(nn.Tanh())
-encoder:add(nn.Diag(outputSize))
+model:add(encoderLinear)
+model:add(nn.Tanh())
 
 -- decoder
-decoder = nn.Sequential()
 decoderLinear = nn.Linear(outputSize,inputSize)
-decoder:add(decoderLinear)
-decoder:add(nn.Tanh())
-
--- complete model
-module = unsup.AutoEncoder(encoder, decoder, params.beta)
+model:add(decoderLinear)
+model:add(nn.Tanh())
 
 --------------------------------------------------------------------
 -- trainable parameters
 --   
 --
 -- get all parameters
-x,dl_dx,ddl_ddx = module:getParameters()  
+x,dl_dx,ddl_ddx = model:getParameters()  
 
 --------------------------------------------------------------------
 -- train model
@@ -120,11 +115,11 @@ for t = 1,params.maxiter,params.batchsize do
       -- estimate f and gradients, for minibatch
       for i = 1,#inputs do
          -- f
-         f = f + module:updateOutput(inputs[i], targets[i])
+         f = f + model:updateOutput(inputs[i], targets[i])
 
          -- gradients
-         module:updateGradInput(inputs[i], targets[i])
-         module:accGradParameters(inputs[i], targets[i])
+         model:updateGradInput(inputs[i], targets[i])
+         model:accGradParameters(inputs[i], targets[i])
       end
 
       -- normalize

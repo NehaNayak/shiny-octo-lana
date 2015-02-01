@@ -5,20 +5,10 @@ import Qry._  // Qry Core
 import Stanford._  // Utilities for Stanford
 
 using("./runDetails")
-//using("pbs")
+using("pbs")
+pbs.name=nnqry311
+pbs.queue=nlp
+
 //using(getConfigOr(args, "/path/to/typesafe/config.conf"))  // tries to guess the config path from the command line arguments too
 
-/* Runs:
- *   ping -c 1 google.com
- *   ping -c 5 google.com
- *   ping -c 1 yahoo.com
- * To run all 4 options, use "&" instead of "|"
- */
-//parallel(<# cores>)
-submit("ping"
-  -("c", "1" | "5")
-  ->("google.com" | "yahoo.com")
-)
-//submit("../../torch-install/bin/torch-lua tryqsub.lua"
-//  -("c", "1" | "5")
-//)
+submit("/scr/nayakne/torch-install/bin/torch-lua /scr/nayakne/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/try1.lua")
