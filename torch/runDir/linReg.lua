@@ -1,25 +1,49 @@
 require 'torch'
 require 'optim'
 require 'nn'
-require 'torchnlp'
+--require 'torchnlp'
+
+-- Command line arguments
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
-cmd:option('-prefix','_','size of input layer')
-cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
+
+cmd:option('-prefix','_','prefix for output')
+cmd:option('-outputDir','./','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
+
+cmd:option('-learningRate',0.01,'learning rate')
+cmd:option('-iterLimit',10e4,'maximum number of iterations')
+cmd:option('-useIterLimit',true,'whether to use iterLimit or wait for convergence')
+
+cmd:option('-useGlove',true,'whether to use Glove or word2vec')
+
 cmdparams = cmd:parse(arg)
 
-local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '.th'
+local output_path = table.concat({
+				cmdparams.outputDir, 
+				cmdparams.prefix,
+				'_model',
+				'_in',
+				cmdparams.inputSize,
+				'_lr',
+				cmdparams.learningRate,
+				'.th'},"")
+print(output_path)
 
-print('loading word embeddings')
-local emb_dir = '/scr/kst/data/wordvecs/glove/'
-local emb_prefix = emb_dir .. 'glove.6B'
+-- Load word embeddings
+if cmdparams.useGlove then
+	local emb_dir = '/scr/kst/data/wordvecs/glove/'
+	local emb_prefix = emb_dir .. 'glove.6B'
+else
+	local emb_dir = '/scr/kst/data/wordvecs/word2vec/'
+	local emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
+end
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
     emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
-print('vocab size = ' .. emb_vecs:size(1))
-print('dimension = ' .. emb_vecs:size(2))
+
+-- Create dataset
 
 local m = torch.randn(cmdparams.inputSize)
 local f =assert(io.open(cmdparams.pairPath, "r"))
@@ -43,64 +67,14 @@ end
 dataset_in = dataset_in:t()
 dataset_out = dataset_out:t()
 
-print(dataset_in)
-print(dataset_out)
+-- Define model
 
-----------------------------------------------------------------------
--- 2. Define the model (predictor)
-
--- The model will have one layer (called a module), which takes the 
--- 2 inputs (fertilizer and insecticide) and produces the 1 output 
--- (corn).
-
--- Note that the Linear model specified below has 3 parameters:
---   1 for the weight assigned to fertilizer
---   1 for the weight assigned to insecticide
---   1 for the weight assigned to the bias term
-
--- In some other model specification schemes, one needs to augment the
--- training data to include a constant value of 1, but this isn't done
--- with the linear model.
-
--- The linear model must be held in a container. A sequential container
--- is appropriate since the outputs of each module become the inputs of 
--- the subsequent module in the model. In this case, there is only one
--- module. In more complex cases, multiple modules can be stacked using
--- the sequential container.
-
--- The modules are all defined in the neural network package, which is
--- named 'nn'.
-
-model = nn.Sequential()                 -- define the container
-ninputs = cmdparams.inputSize; noutputs = cmdparams.inputSize
-model:add(nn.Linear(ninputs, noutputs)) -- define the only module
-
-
-----------------------------------------------------------------------
--- 3. Define a loss function, to be minimized.
-
--- In that example, we minimize the Mean Square Error (MSE) between
--- the predictions of our linear model and the groundtruth available
--- in the dataset.
-
--- Torch provides many common criterions to train neural networks.
-
+model = nn.Sequential() -- define the container
+model:add(nn.Linear(cmdparams.inputSize, cmdparams.inputSize)) -- define the only module
 criterion = nn.MSECriterion()
 
 
-----------------------------------------------------------------------
--- 4. Train the model
-
--- To minimize the loss defined above, using the linear model defined
--- in 'model', we follow a stochastic gradient descent procedure (SGD).
-
--- SGD is a good optimization algorithm when the amount of training data
--- is large, and estimating the gradient of the loss function over the 
--- entire training set is too costly.
-
--- Given an arbitrarily complex model, we can retrieve its trainable
--- parameters, and the gradients of our loss function wrt these 
--- parameters by doing so:
+-- Train
 
 x, dl_dx = model:getParameters()
 
@@ -165,7 +139,7 @@ sgd_params = {
 -- but should typically be determinined using cross-correlation.
 
 -- we cycle 1e4 times over our training data
-for i = 1,1e4 do
+for i = 1,cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
    current_loss = 0
