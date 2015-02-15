@@ -56,16 +56,17 @@ require 'torchnlp'
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
-cmd:option('-prefix','_','size of input layer')
+cmd:option('-hiddenSize',500,'size of hidden layer')
+cmd:option('-prefix','_','prefix for output')
 cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
-local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '.th'
+local output_path = cmdparams.outputDir .. cmdparams.prefix .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
 
 print('loading word embeddings')
-local emb_dir = '/scr/kst/data/wordvecs/glove/'
-local emb_prefix = emb_dir .. 'glove.6B'
+local emb_dir = 'scr/kst/data/wordvecs/word2vec/'
+local emb_prefix = emb_dir ..'wiki.bolt.giga5.f100.unk.neg5.200'
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
     emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
@@ -80,22 +81,18 @@ while true do
   for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    print(win)
     if dataset_in==nil then
         dataset_in = vin:clone()
         dataset_out = vout:clone()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
-      dataset_out = torch.cat(dataset_out,vin,2)
+        dataset_out = torch.cat(dataset_out,vout,2)
     end
   end
 end
 
 dataset_in = dataset_in:t()
 dataset_out = dataset_out:t()
-
-print(dataset_in)
-print(dataset_out)
 
 ----------------------------------------------------------------------
 -- 2. Define the model (predictor)
@@ -123,9 +120,10 @@ print(dataset_out)
 -- named 'nn'.
 
 model = nn.Sequential()                 -- define the container
-ninputs = cmdparams.inputSize; noutputs = cmdparams.inputSize
-model:add(nn.Linear(ninputs, noutputs)) -- define the only module
-
+model:add(nn.Linear(cmdparams.inputSize, cmdparams.hiddenSize)) -- define the only module
+model:add(nn.Tanh())
+model:add(nn.Linear(cmdparams.hiddenSize, cmdparams.inputSize))
+model:add(nn.Tanh())
 
 ----------------------------------------------------------------------
 -- 3. Define a loss function, to be minimized.
@@ -216,9 +214,10 @@ sgd_params = {
 -- but should typically be determinined using cross-correlation.
 
 -- we cycle 1e4 times over our training data
-for i = 1,1e4 do
+for i = 1,1e5 do
 
    -- this variable is used to estimate the average loss
+   prev_loss = current_loss
    current_loss = 0
 
    -- an epoch is a full loop over our training data
@@ -246,6 +245,12 @@ for i = 1,1e4 do
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
    print('current loss = ' .. current_loss)
+
+   if prev_loss~= nil then
+      if (prev_loss - current_loss)/current_loss < 10e-5 then
+         break
+      end
+   end
 
 end
 

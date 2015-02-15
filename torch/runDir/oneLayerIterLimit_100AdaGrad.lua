@@ -56,12 +56,13 @@ require 'torchnlp'
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
-cmd:option('-prefix','_','size of input layer')
+cmd:option('-hiddenSize',500,'size of hidden layer')
+cmd:option('-prefix','_','prefix for output')
 cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
-local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '.th'
+local output_path = cmdparams.outputDir .. cmdparams.prefix .. 'model_iterLimit_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
 
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
@@ -80,22 +81,18 @@ while true do
   for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    print(win)
     if dataset_in==nil then
         dataset_in = vin:clone()
         dataset_out = vout:clone()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
-      dataset_out = torch.cat(dataset_out,vin,2)
+        dataset_out = torch.cat(dataset_out,vout,2)
     end
   end
 end
 
 dataset_in = dataset_in:t()
 dataset_out = dataset_out:t()
-
-print(dataset_in)
-print(dataset_out)
 
 ----------------------------------------------------------------------
 -- 2. Define the model (predictor)
@@ -123,9 +120,10 @@ print(dataset_out)
 -- named 'nn'.
 
 model = nn.Sequential()                 -- define the container
-ninputs = cmdparams.inputSize; noutputs = cmdparams.inputSize
-model:add(nn.Linear(ninputs, noutputs)) -- define the only module
-
+model:add(nn.Linear(cmdparams.inputSize, cmdparams.hiddenSize)) -- define the only module
+model:add(nn.Tanh())
+model:add(nn.Linear(cmdparams.hiddenSize, cmdparams.inputSize))
+model:add(nn.Tanh())
 
 ----------------------------------------------------------------------
 -- 3. Define a loss function, to be minimized.
@@ -204,7 +202,7 @@ end
 --   + a learning rate decay, to let the algorithm converge more precisely
 
 sgd_params = {
-   learningRate = 1e-3,
+   learningRate = 1e-2,
    learningRateDecay = 1e-4,
    weightDecay = 0,
    momentum = 0
@@ -219,6 +217,7 @@ sgd_params = {
 for i = 1,1e4 do
 
    -- this variable is used to estimate the average loss
+   prev_loss = current_loss
    current_loss = 0
 
    -- an epoch is a full loop over our training data
@@ -232,7 +231,7 @@ for i = 1,1e4 do
       --   + a point x
       --   + some parameters, which are algorithm-specific
       
-      _,fs = optim.sgd(feval,x,sgd_params)
+      _,fs = optim.adagrad(feval,x,sgd_params)
 
       -- Functions in optim all return two things:
       --   + the new x, found by the optimization method (here SGD)
@@ -246,6 +245,12 @@ for i = 1,1e4 do
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
    print('current loss = ' .. current_loss)
+
+   --if prev_loss~= nil then
+   --   if (prev_loss - current_loss)/current_loss < 10e-5 then
+   --      break
+   --   end
+   --end
 
 end
 

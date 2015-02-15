@@ -64,8 +64,8 @@ while true do
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     print(win)
     if dataset_in==nil then
-        dataset_in = vin:clone()
-        dataset_out = vout:clone()
+        dataset_in = vin:clone()/vin:norm()
+        dataset_out = vout:clone()/vin:norm()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
       dataset_out = torch.cat(dataset_out,vin,2)

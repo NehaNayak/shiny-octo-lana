@@ -3,56 +3,33 @@ require 'optim'
 require 'nn'
 require 'torchnlp'
 
--- Command line arguments
+----------------------------------------------------------------------
+-- Hyperparams
 
 cmd = torch.CmdLine()
 cmd:option('-inputSize',100,'size of input layer')
-
+cmd:option('-hiddenSize',500,'size of hidden layer')
 cmd:option('-prefix','_','prefix for output')
-cmd:option('-outputDir','./','where to put serialized params')
+cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-lana-2/shiny-octo-lana/torch/figureOut/params/','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
-
-cmd:option('-learningRate',0.01,'learning rate')
-cmd:option('-iterLimit',10e4,'maximum number of iterations')
-
-cmd:option('-useGlove',true,'whether to use Glove or word2vec')
-
 cmdparams = cmd:parse(arg)
 
-if cmdparams.useGlove then
-    vecset = 'g'
-else
-    vecset = 'v'
-end
+local output_path = cmdparams.outputDir .. cmdparams.prefix .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
 
-local output_path = table.concat({
-				cmdparams.outputDir, 
-				cmdparams.prefix,
-				'_model',
-				'_in',
-				cmdparams.inputSize,
-				'_lr',
-				cmdparams.learningRate,
-				'_il',
-				cmdparams.iterLimit,
-                '_v',
-                vecset,
-				},"")
+----------------------------------------------------------------------
+-- Vectors
 
--- Load word embeddings
-
-if cmdparams.useGlove then
-	emb_dir = '/scr/kst/data/wordvecs/glove/'
-	emb_prefix = emb_dir .. 'glove.6B'
-else
-    emb_dir = '/scr/kst/data/wordvecs/word2vec/'
-    emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
-end
+print('loading word embeddings')
+local emb_dir = '/scr/kst/data/wordvecs/glove/'
+local emb_prefix = emb_dir .. 'glove.6B'
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
     emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
+print('vocab size = ' .. emb_vecs:size(1))
+print('dimension = ' .. emb_vecs:size(2))
 
--- Create dataset
+----------------------------------------------------------------------
+-- Training data 
 
 local m = torch.randn(cmdparams.inputSize)
 local f =assert(io.open(cmdparams.pairPath, "r"))
@@ -62,13 +39,12 @@ while true do
   for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    print(win)
     if dataset_in==nil then
         dataset_in = vin:clone()
         dataset_out = vout:clone()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
-      dataset_out = torch.cat(dataset_out,vin,2)
+        dataset_out = torch.cat(dataset_out,vout,2)
     end
   end
 end
@@ -76,22 +52,20 @@ end
 dataset_in = dataset_in:t()
 dataset_out = dataset_out:t()
 
--- Define model
+----------------------------------------------------------------------
+-- Model
 
-model = nn.Sequential() -- define the container
-model:add(nn.Linear(cmdparams.inputSize, cmdparams.inputSize)) -- define the only module
-criterion = nn.MSECriterion()
+model = nn.Sequential() 
+model:add(nn.Linear(cmdparams.inputSize, cmdparams.hiddenSize))
+model:add(nn.Tanh())
+model:add(nn.Linear(cmdparams.hiddenSize, cmdparams.inputSize))
+model:add(nn.Tanh())
+criterion = nn.CosineEmbeddingCriterion()
 
-
+----------------------------------------------------------------------
 -- Train
 
 x, dl_dx = model:getParameters()
-
--- In the following code, we define a closure, feval, which computes
--- the value of the loss function at a given point x, and the gradient of
--- that function with respect to x. x is the vector of trainable weights,
--- which, in this example, are all the weights of the linear matrix of
--- our mode, plus one bias.
 
 feval = function(x_new)
    -- set x to x_new, if differnt
@@ -103,15 +77,11 @@ feval = function(x_new)
 
    -- select a new training sample
    _nidx_ = (_nidx_ or 0) + 1
-   -- if _nidx_ > (#data)[1] then _nidx_ = 1 end
    if _nidx_ > (#dataset_in)[1] then _nidx_ = 1 end
-
-   --local sample = data[_nidx_]
 
    local input_sample = dataset_in[_nidx_]
    local target_sample = dataset_out[_nidx_]
-   --local target = sample[{ {1} }]      -- this funny looking syntax allows
-   --local inputs = sample[{ {2,3} }]    -- slicing of arrays.
+
    local target = target_sample:clone()
    local inputs = input_sample:clone()
 
@@ -120,7 +90,12 @@ feval = function(x_new)
    dl_dx:zero()
 
    -- evaluate the loss function and its derivative wrt x, for that sample
-   local loss_x = criterion:forward(model:forward(inputs), target)
+   local a = model:forward(inputs)
+   local b = target
+   print(a)
+   print(b)
+
+   local loss_x = criterion:forward({a,b},1)
    model:backward(inputs, criterion:backward(model.output, target))
 
    -- return loss(x) and dloss/dx
@@ -148,15 +123,13 @@ sgd_params = {
 -- but should typically be determinined using cross-correlation.
 
 -- we cycle 1e4 times over our training data
---
---
-for i = 1,cmdparams.iterLimit do
+for i = 1,1e5 do
 
    -- this variable is used to estimate the average loss
+   prev_loss = current_loss
    current_loss = 0
 
    -- an epoch is a full loop over our training data
-   -- for i = 1,(#data)[1] do
    for i = 1,(#dataset_in)[1] do
 
       -- optim contains several optimization algorithms. 
@@ -166,7 +139,7 @@ for i = 1,cmdparams.iterLimit do
       --   + a point x
       --   + some parameters, which are algorithm-specific
       
-      _,fs = optim.sgd(feval,x,sgd_params)
+      _,fs = optim.adagrad(feval,x,sgd_params)
 
       -- Functions in optim all return two things:
       --   + the new x, found by the optimization method (here SGD)
@@ -177,14 +150,16 @@ for i = 1,cmdparams.iterLimit do
       current_loss = current_loss + fs[1]
    end
 
-
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
-   --if i % 500 == 0 then
-   --   torch.save(output_path .. '_it' .. i .. '_loss' .. current_loss .. '.th' , model)
-   --end
    print('current loss = ' .. current_loss)
+
+   if prev_loss~= nil then
+      if (prev_loss - current_loss)/current_loss < 10e-6 then
+         break
+      end
+   end
 
 end
 
-torch.save(output_path .. '.th' , model)
+torch.save(output_path, model)
