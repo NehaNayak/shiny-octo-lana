@@ -61,19 +61,19 @@ cmd:option('-outputDir','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
-local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
+local output_path = cmdparams.outputDir .. 'model_' .. cmdparams.inputSize .. '.th'
 
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
 local emb_prefix = emb_dir .. 'glove.6B'
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
-    emb_prefix .. '.' .. inputSize ..'d.th')
+    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
 print('vocab size = ' .. emb_vecs:size(1))
 print('dimension = ' .. emb_vecs:size(2))
 
 local m = torch.randn(cmdparams.inputSize)
-local f =assert(io.open(pairPath, "r"))
+local f =assert(io.open(cmdparams.pairPath, "r"))
 while true do
   line = f:read()
   if not line then break end

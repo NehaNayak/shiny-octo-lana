@@ -1,3 +1,7 @@
+require 'nn'
+require 'torch'
+require 'torchnlp'
+
 function cosine(v, w)
   return v:dot(w) / v:norm() / w:norm()
 end
@@ -10,8 +14,7 @@ cmd:option('-modelPath','/afs/cs.stanford.edu/u/nayakne/NLP-HOME/scr/shiny-octo-
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmdparams = cmd:parse(arg)
 
-local model_path = cmdparams.modelPath .. 'model_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '.th'
-model = torch.load(model_path)
+model = torch.load(cmdparams.modelPath)
 
 print('loading word embeddings')
 local emb_dir = '/scr/kst/data/wordvecs/glove/'
@@ -30,13 +33,12 @@ while true do
   for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    print(win)
     if dataset_in==nil then
         dataset_in = vin:clone()
         dataset_out = vout:clone()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
-      dataset_out = torch.cat(dataset_out,vin,2)
+        dataset_out = torch.cat(dataset_out,vout,2)
     end
   end
 end

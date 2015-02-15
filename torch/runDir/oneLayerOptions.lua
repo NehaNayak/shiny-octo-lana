@@ -6,25 +6,54 @@ require 'torchnlp'
 -- Command line arguments
 
 cmd = torch.CmdLine()
+
+cmd:option('-outputDir','./','where to put serialized params')
+cmd:option('-prefix','_','prefix for output')
+cmd:option('-pairPath','../pairFiles','where to find word pairs')
+
 cmd:option('-inputSize',100,'size of input layer')
 cmd:option('-hiddenSize',500,'size of hidden layer')
-cmd:option('-prefix','_','prefix for output')
-cmd:option('-outputDir','./','where to put serialized params')
-cmd:option('-pairPath','../pairFiles','where to find word pairs')
+
 cmd:option('-learningRate',0.01,'learning rate')
+cmd:option('-iterLimit',10e4,'max number of iterations')
+cmd:option('-useGlove',true,'use glove or word2vec')
 cmdparams = cmd:parse(arg)
 
-local output_path = cmdparams.outputDir .. cmdparams.prefix .. 'model_iterLimit_' .. cmdparams.inputSize .. '_' .. cmdparams.hiddenSize .. '_' .. cmdparams.learningRate .. '.th'
+if cmdparams.useGlove then
+    vecset = 'g'
+else
+    vecset = 'v'
+end
+
+local output_path = table.concat({
+				cmdparams.outputDir, 
+				cmdparams.prefix,
+				'_model',
+				'_in',
+				cmdparams.inputSize,
+				'_h',
+				cmdparams.hiddenSize,
+				'_lr',
+				cmdparams.learningRate,
+				'_il',
+				cmdparams.iterLimit,
+                '_v',
+                vecset,
+				},"")
 
 -- Load word embeddings
 
-local emb_dir = '/scr/kst/data/wordvecs/glove/'
-local emb_prefix = emb_dir .. 'glove.6B'
+if cmdparams.useGlove then
+	emb_dir = '/scr/kst/data/wordvecs/glove/'
+	emb_prefix = emb_dir .. 'glove.6B'
+else
+    emb_dir = '/scr/kst/data/wordvecs/word2vec/'
+    emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
+end
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
     emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
-print('vocab size = ' .. emb_vecs:size(1))
-print('dimension = ' .. emb_vecs:size(2))
+
 
 -- Create dataset
 
@@ -51,8 +80,8 @@ dataset_out = dataset_out:t()
 
 -- Define model
 
-model = nn.Sequential()                 -- define the container
-model:add(nn.Linear(cmdparams.inputSize, cmdparams.hiddenSize)) -- define the only module
+model = nn.Sequential()                 
+model:add(nn.Linear(cmdparams.inputSize, cmdparams.hiddenSize)) 
 model:add(nn.Tanh())
 model:add(nn.Linear(cmdparams.hiddenSize, cmdparams.inputSize))
 model:add(nn.Tanh())
@@ -78,12 +107,8 @@ feval = function(x_new)
    -- if _nidx_ > (#data)[1] then _nidx_ = 1 end
    if _nidx_ > (#dataset_in)[1] then _nidx_ = 1 end
 
-   --local sample = data[_nidx_]
-
    local input_sample = dataset_in[_nidx_]
    local target_sample = dataset_out[_nidx_]
-   --local target = sample[{ {1} }]      -- this funny looking syntax allows
-   --local inputs = sample[{ {2,3} }]    -- slicing of arrays.
    local target = target_sample:clone()
    local inputs = input_sample:clone()
 
@@ -109,7 +134,7 @@ sgd_params = {
 }
 
 -- we cycle 1e4 times over our training data
-for i = 1,1e4 do
+for i = 1, cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
    prev_loss = current_loss
@@ -149,4 +174,4 @@ for i = 1,1e4 do
 
 end
 
-torch.save(output_path, model)
+torch.save(output_path .. '.th', model)

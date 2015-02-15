@@ -1,7 +1,7 @@
 require 'torch'
 require 'optim'
 require 'nn'
---require 'torchnlp'
+require 'torchnlp'
 
 -- Command line arguments
 
@@ -14,11 +14,16 @@ cmd:option('-pairPath','../pairFiles','where to find word pairs')
 
 cmd:option('-learningRate',0.01,'learning rate')
 cmd:option('-iterLimit',10e4,'maximum number of iterations')
-cmd:option('-useIterLimit',true,'whether to use iterLimit or wait for convergence')
 
 cmd:option('-useGlove',true,'whether to use Glove or word2vec')
 
 cmdparams = cmd:parse(arg)
+
+if cmdparams.useGlove then
+    vecset = 'g'
+else
+    vecset = 'v'
+end
 
 local output_path = table.concat({
 				cmdparams.outputDir, 
@@ -28,16 +33,20 @@ local output_path = table.concat({
 				cmdparams.inputSize,
 				'_lr',
 				cmdparams.learningRate,
-				'.th'},"")
-print(output_path)
+				'_il',
+				cmdparams.iterLimit,
+                '_v',
+                vecset,
+				},"")
 
 -- Load word embeddings
+
 if cmdparams.useGlove then
-	local emb_dir = '/scr/kst/data/wordvecs/glove/'
-	local emb_prefix = emb_dir .. 'glove.6B'
+	emb_dir = '/scr/kst/data/wordvecs/glove/'
+	emb_prefix = emb_dir .. 'glove.6B'
 else
-	local emb_dir = '/scr/kst/data/wordvecs/word2vec/'
-	local emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
+    emb_dir = '/scr/kst/data/wordvecs/word2vec/'
+    emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
 end
 local emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
@@ -139,6 +148,8 @@ sgd_params = {
 -- but should typically be determinined using cross-correlation.
 
 -- we cycle 1e4 times over our training data
+--
+--
 for i = 1,cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
@@ -166,10 +177,14 @@ for i = 1,cmdparams.iterLimit do
       current_loss = current_loss + fs[1]
    end
 
+
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
+   --if i % 500 == 0 then
+   --   torch.save(output_path .. '_it' .. i .. '_loss' .. current_loss .. '.th' , model)
+   --end
    print('current loss = ' .. current_loss)
 
 end
 
-torch.save(output_path, model)
+torch.save(output_path .. '.th' , model)
