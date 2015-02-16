@@ -10,6 +10,7 @@ cmd = torch.CmdLine()
 cmd:option('-outputDir','./','where to put serialized params')
 cmd:option('-prefix','_','prefix for output')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
+cmd:option('-synsetPath','../../SynsetLists.th','where to find word pairs')
 
 cmd:option('-inputSize',100,'size of input layer')
 cmd:option('-hiddenSize',500,'size of hidden layer')
@@ -66,8 +67,8 @@ while true do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     if dataset_in==nil then
-        dataset_in = vin:clone()
-        dataset_out = vout:clone()
+        dataset_in = vin:clone()/vin:norm()
+        dataset_out = vout:clone()/vin:norm()
     else
         dataset_in = torch.cat(dataset_in,vin,2)
         dataset_out = torch.cat(dataset_out,vout,2)
@@ -86,7 +87,7 @@ model:add(nn.Tanh())
 model:add(nn.Linear(cmdparams.hiddenSize, cmdparams.inputSize))
 model:add(nn.Tanh())
 
-criterion = nn.CosineEmbeddingCriterion(0)
+criterion = nn.MSECriterion()
 
 -- Train
 
@@ -117,10 +118,8 @@ feval = function(x_new)
    dl_dx:zero()
 
    -- evaluate the loss function and its derivative wrt x, for that sample
-   local loss_x = criterion:forward({model:forward(inputs), target},1)
-   print(criterion:backward({model.output, target},1)[2])
-   model:backward(inputs, criterion:backward({model.output, target},1))
-   
+   local loss_x = criterion:forward(model:forward(inputs), target)
+   model:backward(inputs, criterion:backward(model.output, target))
 
    -- return loss(x) and dloss/dx
    return loss_x, dl_dx
