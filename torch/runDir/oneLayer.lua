@@ -7,16 +7,18 @@ require 'torchnlp'
 
 cmd = torch.CmdLine()
 
-cmd:option('-outputDir','./','where to put serialized params')
-cmd:option('-prefix','_','prefix for output')
-cmd:option('-pairPath','../pairFiles','where to find word pairs')
-
 cmd:option('-inputSize',100,'size of input layer')
 cmd:option('-hiddenSize',500,'size of hidden layer')
 
-cmd:option('-learningRate',0.01,'learning rate')
-cmd:option('-iterLimit',10e4,'max number of iterations')
+cmd:option('-prefix','_','prefix for output')
+cmd:option('-outputDir','./','where to put serialized params')
+cmd:option('-pairPath','../pairFiles','where to find word pairs')
+
+cmd:option('-learningRate',0.5,'learning rate')
+cmd:option('-iterLimit',10e3,'max number of iterations')
+
 cmd:option('-useGlove',true,'use glove or word2vec')
+
 cmdparams = cmd:parse(arg)
 
 if cmdparams.useGlove then
@@ -37,27 +39,29 @@ local output_path = table.concat({
 				cmdparams.learningRate,
 				'_il',
 				cmdparams.iterLimit,
-                '_v',
-                vecset,
+        '_v',
+        vecset,
 				},"")
 
 -- Load word embeddings
 
 if cmdparams.useGlove then
-	emb_dir = '/scr/kst/data/wordvecs/glove/'
-	emb_prefix = emb_dir .. 'glove.6B'
+  emb_dir = '/scr/kst/data/wordvecs/glove/'
+  emb_prefix = emb_dir .. 'glove.6B'
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_prefix .. '.vocab',
+    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
 else
     emb_dir = '/scr/kst/data/wordvecs/word2vec/'
     emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
-end
-local emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
-    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
-
+    emb_prefix .. '.' .. cmdparams.inputSize ..'.th')
+end
 
 -- Create dataset
 
-local m = torch.randn(cmdparams.inputSize)
+local m = torch.randn(cmdparams.inputSize):zero()
 local f =assert(io.open(cmdparams.pairPath, "r"))
 while true do
   line = f:read()
@@ -67,10 +71,10 @@ while true do
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     if dataset_in==nil then
         dataset_in = vin:clone()/vin:norm()
-        dataset_out = vout:clone()/vin:norm()
+        dataset_out = vout:clone()/vout:norm()
     else
-        dataset_in = torch.cat(dataset_in,vin,2)
-        dataset_out = torch.cat(dataset_out,vout,2)
+        dataset_in = torch.cat(dataset_in,vin/vin:norm(),2)
+        dataset_out = torch.cat(dataset_out,vout/vout:norm(),2)
     end
   end
 end
@@ -137,11 +141,9 @@ sgd_params = {
 for i = 1, cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
-   prev_loss = current_loss
    current_loss = 0
 
    -- an epoch is a full loop over our training data
-   -- for i = 1,(#data)[1] do
    for i = 1,(#dataset_in)[1] do
 
       -- optim contains several optimization algorithms. 
@@ -164,13 +166,10 @@ for i = 1, cmdparams.iterLimit do
 
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
+   if i % 500 == 0 then
+      torch.save(output_path .. '_it' .. i .. '.th' , model)
+   end
    print('current loss = ' .. current_loss)
-
-   --if prev_loss~= nil then
-   --   if (prev_loss - current_loss)/current_loss < 10e-5 then
-   --      break
-   --   end
-   --end
 
 end
 
