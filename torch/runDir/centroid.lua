@@ -12,10 +12,10 @@ cmd:option('-prefix','_','prefix for output')
 cmd:option('-outputDir','./','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 
-cmd:option('-learningRate',0.01,'learning rate')
-cmd:option('-iterLimit',10e4,'maximum number of iterations')
+cmd:option('-learningRate',0.5,'learning rate')
+cmd:option('-iterLimit',10e3,'maximum number of iterations')
 
-cmd:option('-useGlove',true,'whether to use Glove or word2vec')
+cmd:option('-useGlove',false,'whether to use Glove or word2vec')
 
 cmdparams = cmd:parse(arg)
 
@@ -31,7 +31,7 @@ local output_path = table.concat({
 				'_model',
 				'_in',
 				cmdparams.inputSize,
-				'_lr',
+				'_v',
                 vecset,
 				},"")
 
@@ -40,13 +40,16 @@ local output_path = table.concat({
 if cmdparams.useGlove then
 	emb_dir = '/scr/kst/data/wordvecs/glove/'
 	emb_prefix = emb_dir .. 'glove.6B'
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_prefix .. '.vocab',
+    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
 else
     emb_dir = '/scr/kst/data/wordvecs/word2vec/'
     emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
-end
-local emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
-    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
+    emb_prefix .. '.' .. cmdparams.inputSize ..'.th')
+end
 
 -- Create dataset
 
@@ -61,20 +64,12 @@ while true do
   for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    in_centroid = in_centroid + vin
-    out_centroid = out_centroid + vout
+    in_centroid = in_centroid + vin/vin:norm()
+    out_centroid = out_centroid + vout/vin:norm()
     datasetSize = datasetSize + 1
   end
 end
 
 diffCentroid = (out_centroid - in_centroid)/datasetSize
-
--- Define model
-
-model = nn.Sequential() -- define the container
-linearLayer = nn.Linear(cmdparams.inputSize, cmdparams.inputSize)
-linearLayer.weight:zero()
-linearLayer.bias = diffCentroid
-model:add(linearLayer) -- define the only module
 
 torch.save(output_path .. '.th' , diffCentroid)
