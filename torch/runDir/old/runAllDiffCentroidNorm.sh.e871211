@@ -1,0 +1,46 @@
+PBS: chdir to /afs/cs.stanford.edu/u/nayakne failed: Permission denied (running user prologue in current directory)/var/spool/torque/mom_priv/jobs/871211.scail.stanford.edu.SC: line 59: =OP: command not found
+torch-lua: cannot open <params/DiffCentrNorm_model_in50_vv.th> in mode r 
+stack traceback:
+	[C]: at 0x7f05e72478e0
+	[C]: in function 'DiskFile'
+	/scr/nayakne/torch-install/share/torch/lua/torch/File.lua:257: in function 'load'
+	../figureOut/testDiff.lua:23: in main chunk
+	[C]: at 0x00402400
+Traceback (most recent call last):
+  File "results/sumCols.py", line 19, in <module>
+    sys.stdout.write(str(float(Pred0Count)/Count)+"\t"+str(float(Self0Count)/Count)+"\t"+str(float(PredSum)/Count)+"\t"+str(float(SelfSum)/Count)+"\n")
+ZeroDivisionError: float division
+torch-lua: cannot open <params/DiffCentrNorm_model_in50_vv.th> in mode r 
+stack traceback:
+	[C]: at 0x7facbb0998e0
+	[C]: in function 'DiskFile'
+	/scr/nayakne/torch-install/share/torch/lua/torch/File.lua:257: in function 'load'
+	../figureOut/testDiff.lua:23: in main chunk
+	[C]: at 0x00402400
+Traceback (most recent call last):
+  File "results/sumCols.py", line 19, in <module>
+    sys.stdout.write(str(float(Pred0Count)/Count)+"\t"+str(float(Self0Count)/Count)+"\t"+str(float(PredSum)/Count)+"\t"+str(float(SelfSum)/Count)+"\n")
+ZeroDivisionError: float division
+torch-lua: cannot open <params/DiffCentrNorm_model_in200_vv.th> in mode r 
+stack traceback:
+	[C]: at 0x7f44ac8408e0
+	[C]: in function 'DiskFile'
+	/scr/nayakne/torch-install/share/torch/lua/torch/File.lua:257: in function 'load'
+	../figureOut/testDiff.lua:23: in main chunk
+	[C]: at 0x00402400
+Traceback (most recent call last):
+  File "results/sumCols.py", line 19, in <module>
+    sys.stdout.write(str(float(Pred0Count)/Count)+"\t"+str(float(Self0Count)/Count)+"\t"+str(float(PredSum)/Count)+"\t"+str(float(SelfSum)/Count)+"\n")
+ZeroDivisionError: float division
+torch-lua: cannot open <params/DiffCentrNorm_model_in200_vv.th> in mode r 
+stack traceback:
+	[C]: at 0x7f1c57aa48e0
+	[C]: in function 'DiskFile'
+	/scr/nayakne/torch-install/share/torch/lua/torch/File.lua:257: in function 'load'
+	../figureOut/testDiff.lua:23: in main chunk
+	[C]: at 0x00402400
+Traceback (most recent call last):
+  File "results/sumCols.py", line 19, in <module>
+    sys.stdout.write(str(float(Pred0Count)/Count)+"\t"+str(float(Self0Count)/Count)+"\t"+str(float(PredSum)/Count)+"\t"+str(float(SelfSum)/Count)+"\n")
+ZeroDivisionError: float division
+PBS: chdir to /afs/cs.stanford.edu/u/nayakne failed: Permission denied (running user epilogue in current directory)

@@ -1,0 +1,4 @@
+Word2Vec  Train 50
+Word2Vec  Dev 50
+Word2Vec  Train 200
+Word2Vec  Dev 200
