@@ -6,6 +6,7 @@ require 'torchnlp'
 -- Command line arguments
 
 cmd = torch.CmdLine()
+
 cmd:option('-inputSize',100,'size of input layer')
 
 cmd:option('-prefix','_','prefix for output')
@@ -65,7 +66,7 @@ while true do
     local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
     local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
     in_centroid = in_centroid + vin/vin:norm()
-    out_centroid = out_centroid + vout/vin:norm()
+    out_centroid = out_centroid + vout/vout:norm()
     datasetSize = datasetSize + 1
   end
 end

@@ -6,6 +6,7 @@ require 'torchnlp'
 -- Command line arguments
 
 cmd = torch.CmdLine()
+
 cmd:option('-inputSize',100,'size of input layer')
 
 cmd:option('-prefix','_','prefix for output')
@@ -57,7 +58,7 @@ end
 
 -- Create dataset
 
-local m = torch.randn(cmdparams.inputSize)
+local m = torch.randn(cmdparams.inputSize):zero()
 local f =assert(io.open(cmdparams.pairPath, "r"))
 while true do
   line = f:read()
@@ -82,17 +83,14 @@ dataset_out = dataset_out:t()
 
 model = nn.Sequential() -- define the container
 model:add(nn.Linear(cmdparams.inputSize, cmdparams.inputSize)) -- define the only module
+
 criterion = nn.MSECriterion()
 
 -- Train
 
 x, dl_dx = model:getParameters()
 
--- In the following code, we define a closure, feval, which computes
--- the value of the loss function at a given point x, and the gradient of
--- that function with respect to x. x is the vector of trainable weights,
--- which, in this example, are all the weights of the linear matrix of
--- our mode, plus one bias.
+-- Define closure
 
 feval = function(x_new)
    -- set x to x_new, if differnt
@@ -139,14 +137,7 @@ sgd_params = {
    momentum = 0
 }
 
--- We're now good to go... all we have left to do is run over the dataset
--- for a certain number of iterations, and perform a stochastic update 
--- at each iteration. The number of iterations is found empirically here,
--- but should typically be determinined using cross-correlation.
-
 -- we cycle 1e4 times over our training data
---
---
 for i = 1,cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
@@ -172,7 +163,6 @@ for i = 1,cmdparams.iterLimit do
 
       current_loss = current_loss + fs[1]
    end
-
 
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
