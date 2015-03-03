@@ -17,7 +17,7 @@ cmd:option('-pairPath','../pairFiles','where to find word pairs')
 cmd:option('-learningRate',0.5,'learning rate')
 cmd:option('-iterLimit',10e3,'max number of iterations')
 
-cmd:option('-useGlove',true,'use glove or word2vec')
+cmd:option('-useGlove',false,'use glove or word2vec')
 
 cmdparams = cmd:parse(arg)
 
@@ -138,18 +138,43 @@ sgd_params = {
 }
 
 -- we cycle 1e4 times over our training data
-for i = 1, cmdparams.iterLimit do
+for i = 1, cmdparams.iterLimit, cmdparams.batchSize do
+
+   --------------------------------------------------------------------
+   -- create mini-batch
+   --
+   local inputs = {}
+   local targets = {}
+   for t = i,i+params.batchsize-1 do
+      -- load new sample
+      local input = dataset_in[t]:clone()
+      local target = dataset_out[t]:clone()
+      table.insert(inputs, input)
+      table.insert(targets, target)
+   end
+
+   --------------------------------------------------------------------
+   -- define eval closure
+   --
+   local feval = function()
+      local f = 0
+      dl_dx:zero()
+      for j = 1,#inputs do
+         f = f + criterion:forward(model:forward(inputs[j]), targets[j])
+         -- gradients
+         model:backward(inputs[j], criterion:backward(model.output, targets[j]))
+      end
+      -- normalize
+      dl_dx:div(#inputs)
+      f = f/#inputs
+      -- return f and df/dx
+      return f,dl_dx
+   end
 
    -- this variable is used to estimate the average loss
    current_loss = 0
-
-   -- an epoch is a full loop over our training data
-   for i = 1,(#dataset_in)[1] do
-      
-      _,fs = optim.sgd(feval,x,sgd_params)
-      
-      current_loss = current_loss + fs[1]
-   end
+   _,fs = optim.sgd(feval,x,sgd_params)
+   current_loss = current_loss + fs[1]
 
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
