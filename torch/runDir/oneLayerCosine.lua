@@ -15,8 +15,7 @@ cmd:option('-outputDir','./','where to put serialized params')
 cmd:option('-pairPath','../pairFiles','where to find word pairs')
 
 cmd:option('-learningRate',0.5,'learning rate')
-cmd:option('-iterLimit',10e4,'max number of iterations')
-cmd:option('-batchSize',10,'minibatch size')
+cmd:option('-iterLimit',10e3,'max number of iterations')
 
 cmd:option('-useGlove',false,'use glove or word2vec')
 
@@ -40,15 +39,15 @@ local output_path = table.concat({
 				cmdparams.learningRate,
 				'_il',
 				cmdparams.iterLimit,
-        '_v',
-        vecset,
+                '_v',
+                vecset,
 				},"")
 
 -- Load word embeddings
 
 if cmdparams.useGlove then
-  emb_dir = '/scr/kst/data/wordvecs/glove/'
-  emb_prefix = emb_dir .. 'glove.6B'
+    emb_dir = '/scr/kst/data/wordvecs/glove/'
+    emb_prefix = emb_dir .. 'glove.6B'
     emb_vocab, emb_vecs = torchnlp.read_embedding(
     emb_prefix .. '.vocab',
     emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
@@ -97,6 +96,32 @@ criterion = nn.CosineEmbeddingCriterion()
 
 x, dl_dx = model:getParameters()
 
+-- Define closure
+
+feval = function(x_new)
+   --if x ~= x_new then
+   --   x:copy(x_new)
+   --end
+
+   _nidx_ = (_nidx_ or 0) + 1
+   if _nidx_ > (#dataset_in)[1] then _nidx_ = 1 end
+
+   local input_sample = dataset_in[_nidx_]
+   local target_sample = dataset_out[_nidx_]
+   local target = target_sample:clone()
+   local inputs = input_sample:clone()
+
+   -- reset gradients 
+   dl_dx:zero()
+
+   -- evaluate the loss function and its derivative wrt x, for that sample
+   local loss_x = criterion:forward({model:forward(inputs), target},1)
+   model:backward(inputs, criterion:backward({model.output, target},1)[1])
+
+   -- return loss(x) and dloss/dx
+   return loss_x, dl_dx
+end
+
 -- SGD
 
 sgd_params = {
@@ -107,46 +132,18 @@ sgd_params = {
 }
 
 -- we cycle 1e4 times over our training data
-for i = 1, cmdparams.iterLimit, cmdparams.batchSize do
-
-   --------------------------------------------------------------------
-   -- create mini-batch
-   --
-   local inputs = {}
-   local targets = {}
-   for t = i,i+cmdparams.batchSize-1 do
-      -- load new sample
-      index = t%((#dataset_in)[1])+1
-      local input = dataset_in[index]:clone()
-      local target = dataset_out[index]:clone()
-      table.insert(inputs, input)
-      table.insert(targets, target)
-   end
-
-   --------------------------------------------------------------------
-   -- define eval closure
-   --
-   local feval = function()
-      local f = 0
-      dl_dx:zero()
-      for j = 1,#inputs do
-         f = f + criterion:forward({model:forward(inputs[j]), targets[j]},1)
-         -- gradients
-         model:backward(inputs[j], criterion:backward({model.output, targets[j]},1)[1])
-       --f = f + criterion:forward({model:forward(inputs), targets},1)
-       --model:backward(inputs, criterion:backward({model.output, targets},1))
-      end
-      -- normalize
-      dl_dx:div(#inputs)
-      f = f/#inputs
-      -- return f and df/dx
-      return f,dl_dx
-   end
+for i = 1, cmdparams.iterLimit do
 
    -- this variable is used to estimate the average loss
    current_loss = 0
-   _,fs = optim.sgd(feval,x,sgd_params)
-   current_loss = current_loss + fs[1]
+
+   -- an epoch is a full loop over our training data
+   for i = 1,(#dataset_in)[1] do
+
+      _,fs = optim.sgd(feval,x,sgd_params)
+      current_loss = current_loss + fs[1]
+
+   end
 
    -- report average error on epoch
    current_loss = current_loss / (#dataset_in)[1]
