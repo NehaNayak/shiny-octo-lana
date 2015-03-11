@@ -8,6 +8,7 @@ function readSet(size,pairPath,synsetPath)
 Synsets = torch.load(synsetPath)
 
    local m = torch.randn(size):zero()
+    ones=m:clone():fill(1)
     local f =assert(io.open(pairPath, "r"))
 
     while true do
@@ -21,17 +22,27 @@ Synsets = torch.load(synsetPath)
                 vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
             else
                 vin = m:clone()
+                pos = m:clone():fill(1)
+                neg = m:clone():fill(1)
                 for i, word in ipairs(Synsets[win]) do
-                    vin = vin + emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    vec = emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    pos:cmul(torch.cdiv(ones,(ones+torch.exp(vec))))
+                    neg:cmul(torch.cdiv(ones,(ones+torch.exp(-vec))))
                 end
+                vin = neg - pos
             end
             if Synsets[wout]==nil then
                 vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
             else
                 vout = m:clone()
+                pos = m:clone():fill(1)
+                neg = m:clone():fill(1)
                 for i, word in ipairs(Synsets[wout]) do
-                    vout = vout + emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    vec = emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    pos:cmul(torch.cdiv(ones,(ones+torch.exp(vec))))
+                    neg:cmul(torch.cdiv(ones,(ones+torch.exp(-vec))))
                 end
+                vout = neg - pos
             end
 
             if set_in ==nil then

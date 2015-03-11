@@ -95,8 +95,9 @@ dev_out=dev[2]
 
 model = nn.Sequential() 
 model:add(nn.Linear(cmdparams.inputSize, cmdparams.inputSize)) -- define the only module
-cos=nn.cosineDistance()
+cos=nn.CosineDistance()
 criterion = nn.MarginRankingCriterion()
+criterion2 = nn.CosineEmbeddingCriterion()
 
 -- Train
 
@@ -113,18 +114,20 @@ feval = function()
 
    dl_dx:zero()
 
-    v_1 = model1.forward(input)
+    v_1 = model:forward(input)
     v_2 = input
-    d_1 = cos.forward({v_1,target})
-    d_2 = cos.forward({v_2,target})
+    print(v_1)
+    print(v_2)
+    d_1 = cos:forward({v_1,target})
+    d_2 = cos:forward({v_2,target})
 
-    local loss_x = criterion:forward({d1,d2},1)
-    criterion_grad = criterion:backward({d1,d2},1)
-    cos_grad = cos.backward({v_1,target},criterion_grad[1])
+    print(d_1)
+    print(d_2)
+
+    local loss_x = criterion:forward({d_1,d_2},1)
+    criterion_grad = criterion:backward({d_1,d_2},1)
+    cos_grad = cos:backward({v_1,target},criterion_grad[1])
     model:backward(v_1, cos_grad[1])
-
-   local loss_x = criterion:forward({model:forward(input), target},1)
-   model:backward(input, criterion:backward({model.output, target},1)[1])
 
    return loss_x, dl_dx
 
@@ -152,7 +155,7 @@ for i = 1,cmdparams.iterLimit do
     for j = 1,(#dev_in)[1] do
         local input_sample = dev_in[j]
         local target_sample = dev_out[j]
-        local loss = criterion:forward({model:forward(input_sample), target_sample},1)
+        local loss = criterion2:forward({model:forward(input_sample), target_sample},1)
         dev_loss = dev_loss+loss
     end
     dev_loss = dev_loss / (#dev_in)[1]
@@ -162,10 +165,10 @@ for i = 1,cmdparams.iterLimit do
         break
     end
 
-    if i%50==0 then
-        print('current train loss = ' .. train_loss)
-        print('current dev loss = ' .. dev_loss)
-    end
+    --if i%50==0 then
+    print('current train loss = ' .. train_loss)
+    print('current dev loss = ' .. dev_loss)
+    --end
 
 end
 
