@@ -25,7 +25,7 @@ function readSet(size,pairPath,synsetPath)
             else
                 vin = m:clone()
                 for i, word in ipairs(Synsets[win]) do
-                    vin = vin + emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    vin:cmul(emb_vecs[emb_vocab:index(word)]:typeAs(m))
                 end
             end
             if Synsets[wout]==nil then
@@ -33,7 +33,7 @@ function readSet(size,pairPath,synsetPath)
             else
                 vout = m:clone()
                 for i, word in ipairs(Synsets[wout]) do
-                    vout = vout + emb_vecs[emb_vocab:index(word)]:typeAs(m)
+                    vout:cmul(emb_vecs[emb_vocab:index(word)]:typeAs(m))
                 end
             end
 
