@@ -27,6 +27,16 @@ function readSet(size,path)
    
 end
 
+function makeCentroid(set_in, set_out)
+    in_centroid = set_in[1]:clone():zero()
+    out_centroid = in_centroid:clone():zero()
+    for i = 1,(#set_in)[1] do
+        in_centroid = in_centroid + set_in[i]/set_in[i]:norm()
+        out_centroid = out_centroid + set_out[i]/set_out[i]:norm()
+    end
+    return out_centroid-in_centroid
+end    
+
 -- Command line arguments
 
 cmd = torch.CmdLine()
@@ -80,23 +90,14 @@ end
 
 -- Create dataset
 
-local m = torch.randn(cmdparams.inputSize):zero()
-in_centroid = m:clone()
-out_centroid = m:clone()
-datasetSize = 0
-local f =assert(io.open(cmdparams.pairPath, "r"))
-while true do
-  line = f:read()
-  if not line then break end
-  for wout,win in string.gmatch(line, "(%w+)%s(%w+)") do
-    local vin = emb_vecs[emb_vocab:index(win)]:typeAs(m)
-    local vout = emb_vecs[emb_vocab:index(wout)]:typeAs(m)
-    in_centroid = in_centroid + vin/vin:norm()
-    out_centroid = out_centroid + vout/vout:norm()
-    datasetSize = datasetSize + 1
-  end
-end
+train = readSet(cmdparams.inputSize, cmdparams.trainPath) 
+train_in=train[1]
+train_out=train[2]
 
-diffCentroid = (out_centroid - in_centroid)/datasetSize
+dev = readSet(cmdparams.inputSize, cmdparams.devPath) 
+dev_in=dev[1]
+dev_out=dev[2]
 
-torch.save(output_path .. '.th' , diffCentroid)
+offset = makeOffset(set_in, set_out)
+
+torch.save(output_path .. '.th' , offset)
