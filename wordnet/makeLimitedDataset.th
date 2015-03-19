@@ -1,0 +1,33 @@
+cmd = torch.CmdLine()
+
+cmd:option('-inputSize',100,'size of input layer')
+cmd:option('-synsetList','../../SynsetLists.th','where to find synsets')
+cmd:option('-useGlove',false,'whether to use Glove or word2vec')
+
+cmdparams = cmd:parse(arg)
+
+if cmdparams.useGlove then
+    emb_dir = '/scr/kst/data/wordvecs/glove/'
+    emb_prefix = emb_dir .. 'glove.6B'
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_prefix .. '.vocab',
+    emb_prefix .. '.' .. cmdparams.inputSize ..'d.th')
+else
+    emb_dir = '/scr/kst/data/wordvecs/word2vec/'
+    emb_prefix = emb_dir .. 'wiki.bolt.giga5.f100.unk.neg5'
+    emb_vocab, emb_vecs = torchnlp.read_embedding(
+    emb_prefix .. '.vocab',
+    emb_prefix .. '.' .. cmdparams.inputSize ..'.th')
+end
+
+nounSynsetList=torch.load(cmdparams.synsetList)
+
+nounVectors = {}
+
+for k,v in pairs(nounSynsetList) do
+    nounVectors[key] = emb_vecs[emb_vocab:index(k)]
+end
+
+print(nounVectors)
+
+torch.save(nounVectors,cmdparams.output)
